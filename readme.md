@@ -14,8 +14,8 @@ Architecture components provide Nette Forms' BaseControl in two flavors:
 
 UI components:
 - *AutocompleteControl* - text input with support for autocomplete signal handling;
-- *DatePicker* - date picker - text input returning `DateTimeImmutable` instance;
-- *DateTimePicker* - date picker - text input returning `DateTimeImmutable` instance;
+- *DateControl* - date picker - text input returning `DateTimeImmutable` instance;
+- *DateTimeControl* - date tiime picker - text input returning `DateTimeImmutable` instance;
 
 ### Installation
 
