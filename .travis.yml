@@ -1,0 +1,34 @@
+language: php
+
+php:
+    - 7.1
+    - 7.2
+    - 7.3
+
+matrix:
+    fast_finish: true
+
+cache:
+    directories:
+        - $HOME/.composer/cache
+
+before_script:
+    - composer install --no-interaction --prefer-source
+
+    - cp ./tests/php.unix-sample.ini ./tests/php.ini
+
+    - if [ "$TRAVIS_PHP_VERSION" == "7.3" ]; then cat ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/xdebug.ini >> ./tests/php.ini; fi
+    - if [ "$TRAVIS_PHP_VERSION" == "7.3" ]; then NTESTER_FLAGS="--coverage ./coverage.xml --coverage-src ./src"; else TESTER_FLAGS=""; fi
+
+script:
+    - ./tests/run.sh -s $NTESTER_FLAGS ./tests/cases
+    - if [ "$TRAVIS_PHP_VERSION" == "7.3" ]; then vendor/bin/phpstan analyze src -l 7 -c .phpstan.neon; fi
+
+after_script:
+    - if [ "$TRAVIS_PHP_VERSION" == "7.3" ]; then composer require php-coveralls/php-coveralls; fi
+    - if [ "$TRAVIS_PHP_VERSION" == "7.3" ]; then php vendor/bin/php-coveralls -c tests/.coveralls.yml -v; fi
+
+after_failure:
+    # Print *.actual content & log content
+    - for i in $(find tests -name \*.actual); do echo "--- $i"; cat $i; echo; echo; done
+    - for i in $(find tests -name \*.log); do echo "--- $i"; cat $i; echo; echo; done

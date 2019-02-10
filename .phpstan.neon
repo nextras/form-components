@@ -1,0 +1,8 @@
+includes:
+	- vendor/phpstan/phpstan-nette/extension.neon
+	- vendor/phpstan/phpstan-nette/rules.neon
+
+parameters:
+	ignoreErrors:
+	excludes_analyse:
+		- %currentWorkingDirectory%/src/Fragments/Traits/*
