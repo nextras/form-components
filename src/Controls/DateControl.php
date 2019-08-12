@@ -37,9 +37,9 @@ class DateControl extends DateTimeControlPrototype
 				return null;
 			}
 
-			$dd = $matches['dd'];
-			$mm = $matches['mm'];
-			$yyyy = $matches['yyyy'] ?? date('Y');
+			$dd = (int) $matches['dd'];
+			$mm = (int) $matches['mm'];
+			$yyyy = (int) ($matches['yyyy'] ?? date('Y'));
 
 			if (!checkdate($mm, $dd, $yyyy)) {
 				return null;

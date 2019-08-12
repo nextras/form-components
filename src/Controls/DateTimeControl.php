@@ -37,17 +37,17 @@ class DateTimeControl extends DateTimeControlPrototype
 				return null;
 			}
 
-			$dd = $matches['dd'];
-			$mm = $matches['mm'];
-			$yyyy = $matches['yyyy'] ?? date('Y');
+			$dd = (int) $matches['dd'];
+			$mm = (int) $matches['mm'];
+			$yyyy = (int) ($matches['yyyy'] ?? date('Y'));
 
 			if (!checkdate($mm, $dd, $yyyy)) {
 				return null;
 			}
 
-			$hh = $matches['hh'] ?? 0;
-			$ii = $matches['ii'] ?? 0;
-			$ss = $matches['ss'] ?? 0;
+			$hh = (int) ($matches['hh'] ?? 0);
+			$ii = (int) ($matches['ii'] ?? 0);
+			$ss = (int) ($matches['ss'] ?? 0);
 
 			if (!($hh >= 0 && $hh < 24 && $ii >= 0 && $ii <= 59 && $ss >= 0 && $ss <= 59)) {
 				return null;
