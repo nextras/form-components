@@ -35,6 +35,7 @@ abstract class DateTimeControlPrototype extends TextBase
 	{
 		$control = parent::getControl();
 		$control->type = $this->htmlType;
+		$control->autocomplete('off');
 		$control->addClass($this->htmlType);
 
 		list($min, $max) = $this->extractRangeRule($this->getRules());
