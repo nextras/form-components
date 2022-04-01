@@ -22,8 +22,34 @@ class DateControl extends DateTimeControlPrototype
 
 	/** @var string */
 	protected $htmlType = 'date';
+	
+	/** @var array */
+	private $time = [0, 0, 0, 0];
+
+	
+	public function setTime(int $h, int $m = 0, int $s = 0, int $ms = 0): self
+	{
+		if ($h < 0 || $h > 23
+			|| $m < 0 || $m > 59
+			|| $s < 0 || $s > 59
+			|| $ms < 0 || $ms > 999999
+		) {
+			throw new InvalidArgumentException('Please set valid time');
+		}
+		$this->time = [$h, $m, $s, $ms];
+		return $this;
+	}
 
 
+	/**
+	 * Suitable for usage with datetime field in database
+	 */
+	public function setLatestTime(bool $useMicroSeconds = false): self
+	{
+		return $this->setTime(23, 59, 59, $useMicroSeconds ? 999999 : 0);
+	}
+	
+	
 	protected function getDefaultParser()
 	{
 		return function($value) {
@@ -47,7 +73,7 @@ class DateControl extends DateTimeControlPrototype
 
 			return (new DateTimeImmutable())
 				->setDate($yyyy, $mm, $dd)
-				->setTime(0, 0, 0);
+				->setTime(...$this->time);
 		};
 	}
 
@@ -58,9 +84,9 @@ class DateControl extends DateTimeControlPrototype
 	public function getValue()
 	{
 		$val = parent::getValue();
-		// set the midnight so the limit dates (min & max) pass the :RANGE validation rule
+		// set time so the limit dates (min & max) pass the :RANGE validation rule
 		if ($val !== null) {
-			return $val->setTime(0, 0, 0);
+			return $val->setTime(...$this->time);
 		}
 		return $val;
 	}
