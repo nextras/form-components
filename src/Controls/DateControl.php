@@ -54,7 +54,7 @@ class DateControl extends DateTimeControlPrototype
 	{
 		return function($value) {
 			try {
-				return new DateTimeImmutable($value);
+				return (new DateTimeImmutable($value))->setTime(...$this->time);
 			} catch (\Exception $e) {
 				// fallback to custm parsing
 			}
@@ -78,16 +78,4 @@ class DateControl extends DateTimeControlPrototype
 	}
 
 
-	/**
-	 * @return DateTimeImmutable|null
-	 */
-	public function getValue()
-	{
-		$val = parent::getValue();
-		// set time so the limit dates (min & max) pass the :RANGE validation rule
-		if ($val !== null) {
-			return $val->setTime(...$this->time);
-		}
-		return $val;
-	}
 }
