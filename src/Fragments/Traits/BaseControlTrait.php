@@ -50,7 +50,7 @@ trait BaseControlTrait
 	private $omitted;
 
 	/** @var Rules */
-	private $rules;
+	protected $rules;
 
 	/** @var Nette\Localization\ITranslator */
 	private $translator = true; // means autodetect
