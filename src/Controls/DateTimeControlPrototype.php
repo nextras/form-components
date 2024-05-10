@@ -63,11 +63,8 @@ abstract class DateTimeControlPrototype extends TextBase
 		);
 	}
 
-
-	/**
-	 * @return DateTimeImmutable|null
-	 */
-	public function getValue()
+	
+	public function getValue(): ?DateTimeImmutable
 	{
 		if ($this->value instanceof DateTimeImmutable) {
 			return $this->value;
