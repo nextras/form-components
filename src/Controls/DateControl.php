@@ -51,11 +51,8 @@ class DateControl extends DateTimeControlPrototype
 		};
 	}
 
-
-	/**
-	 * @return DateTimeImmutable|null
-	 */
-	public function getValue()
+	
+	public function getValue(): ?DateTimeImmutable
 	{
 		$val = parent::getValue();
 		// set the midnight so the limit dates (min & max) pass the :RANGE validation rule
