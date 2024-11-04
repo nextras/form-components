@@ -10,11 +10,11 @@
 namespace Nextras\FormComponents\Fragments\UIComponent;
 
 use Nette\Application\UI\Component;
-use Nette\Forms\IControl;
+use Nette\Forms\Control;
 use Nextras\FormComponents\Fragments\Traits\BaseControlTrait;
 
 
-abstract class BaseControl extends Component implements IControl
+abstract class BaseControl extends Component implements Control
 {
 	use BaseControlTrait;
 }
