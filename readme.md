@@ -1,7 +1,7 @@
 Nextras Form Components
 ========================
 
-[![Build Status](https://travis-ci.org/nextras/form-components.svg?branch=master)](https://travis-ci.org/nextras/form-components)
+[![Build](https://github.com/nextras/form-components/actions/workflows/build.yaml/badge.svg)](https://github.com/nextras/form-components/actions/workflows/build.yaml)
 [![Downloads this Month](https://img.shields.io/packagist/dm/nextras/form-components.svg?style=flat)](https://packagist.org/packages/nextras/form-components)
 [![Stable version](http://img.shields.io/packagist/v/nextras/form-components.svg?style=flat)](https://packagist.org/packages/nextras/form-components)
 [![Code coverage](https://img.shields.io/coveralls/nextras/form-components.svg?style=flat)](https://coveralls.io/r/nextras/form-components)
