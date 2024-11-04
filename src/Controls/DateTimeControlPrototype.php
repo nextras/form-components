@@ -95,22 +95,25 @@ abstract class DateTimeControlPrototype extends TextBase
 	}
 
 
-	public function addParser(callable $parser)
+	public function addParser(callable $parser): self
 	{
 		$this->parsers[] = $parser;
 		return $this;
 	}
 
 
+	/**
+	 * @return callable(string $input):(DateTimeImmutable|null)
+	 */
 	abstract protected function getDefaultParser();
 
 
 	/**
 	 * Finds minimum and maximum allowed dates.
 	 *
-	 * @return array 0 => DateTime|null $minDate, 1 => DateTime|null $maxDate
+	 * @return array{DateTime|null,DateTime|null} 0 => DateTime|null $minDate, 1 => DateTime|null $maxDate
 	 */
-	protected function extractRangeRule(Rules $rules)
+	protected function extractRangeRule(Rules $rules): array
 	{
 		$controlMin = $controlMax = null;
 		/** @var Nette\Forms\Rule $rule */

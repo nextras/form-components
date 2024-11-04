@@ -47,13 +47,16 @@ class AutocompleteControl extends TextInput
 	}
 
 
-	public function setCallback(callable $callback)
+	/**
+	 * @param callable(string $input):mixed $callback
+	 */
+	public function setCallback(callable $callback): void
 	{
 		$this->callback = $callback;
 	}
 
 
-	public function handleAutocomplete(string $q)
+	public function handleAutocomplete(string $q): void
 	{
 		if (!$this->callback) {
 			throw new InvalidStateException('Undefined autocomplete callback.');

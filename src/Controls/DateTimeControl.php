@@ -24,7 +24,7 @@ class DateTimeControl extends DateTimeControlPrototype
 	protected $htmlType = 'datetime-local';
 
 
-	protected function getDefaultParser()
+	protected function getDefaultParser(): callable
 	{
 		return function($value) {
 			try {
