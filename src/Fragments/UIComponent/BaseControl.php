@@ -10,6 +10,8 @@
 namespace Nextras\FormComponents\Fragments\UIComponent;
 
 use Nette\Application\UI\Component;
+use Nette\ComponentModel\Container;
+use Nette\ComponentModel\IComponent;
 use Nette\Forms\Control;
 use Nextras\FormComponents\Fragments\Traits\BaseControlTrait;
 
@@ -17,4 +19,11 @@ use Nextras\FormComponents\Fragments\Traits\BaseControlTrait;
 abstract class BaseControl extends Component implements Control
 {
 	use BaseControlTrait;
+
+
+	protected function createComponent(string $name): ?IComponent
+	{
+		// skip the warning trigger that component is not intended to be used in the Presenter
+		return Container::createComponent($name);
+	}
 }
