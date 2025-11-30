@@ -64,7 +64,6 @@ class AutocompleteControl extends TextInput
 
 		$out = call_user_func($this->callback, $q);
 		$presenter = $this->getPresenter();
-		assert($presenter !== null);
 		$presenter->sendJson($out);
 	}
 }
