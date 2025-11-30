@@ -14,66 +14,43 @@
 namespace Nextras\FormComponents\Fragments\Traits;
 
 use Nette;
+use Nette\Forms\Control;
 use Nette\Forms\Form;
 use Nette\Forms\IControl;
 use Nette\Forms\Rules;
 use Nette\Utils\Html;
+use Stringable;
 
 
 trait BaseControlTrait
 {
-	/** @var string */
-	public static $idMask = 'frm-%s';
+	public static string $idMask = 'frm-%s';
 
-	/** @var mixed current control value */
-	protected $value;
+	protected mixed $value = null;
+	protected Html $control;
+	protected Html $label;
 
-	/** @var Html  control element template */
-	protected $control;
-
-	/** @var Html  label element template */
-	protected $label;
-
-	/** @var bool */
-	protected $disabled = false;
+	/** @var bool|bool[] */
+	protected bool|array $disabled = false;
 
 	/** @var callable[][]  extension methods */
-	private static $extMethods = [];
+	private static array $extMethods = [];
+	private string|Stringable|null $caption;
+	private array $errors = [];
+	private ?bool $omitted = null;
+	private Rules $rules;
 
-	/** @var string|object textual caption or label */
-	private $caption;
-
-	/** @var array */
-	private $errors = [];
-
-	/** @var bool|null */
-	private $omitted;
-
-	/** @var Rules */
-	protected $rules;
-
-	/** @var Nette\Localization\ITranslator */
-	private $translator = true; // means autodetect
-
-	/** @var array user options */
-	private $options = [];
-
-	/** @var bool */
-	private static $autoOptional = false;
+	/** true means autodetect */
+	private Nette\Localization\Translator|bool|null $translator = true;
+	private array $options = [];
 
 
-	/**
-	 * @param  string|object  $caption
-	 */
-	public function __construct($caption = null)
+	public function __construct(string|Stringable|null $caption = null)
 	{
 		$this->control = Html::el('input', ['type' => null, 'name' => null]);
 		$this->label = Html::el('label');
 		$this->caption = $caption;
 		$this->rules = new Rules($this);
-		if (self::$autoOptional) {
-			$this->setRequired(false);
-		}
 		$this->setValue(null);
 		$this->monitor(Form::class, function (Form $form): void {
 			if (!$this->isDisabled() && $form->isAnchored() && $form->isSubmitted()) {
@@ -85,20 +62,15 @@ trait BaseControlTrait
 
 	/**
 	 * Sets textual caption or label.
-	 * @param object|string  $caption
-	 * @return static
 	 */
-	public function setCaption($caption)
+	public function setCaption(string|Stringable|null $caption): static
 	{
 		$this->caption = $caption;
 		return $this;
 	}
 
 
-	/**
-	 * @return object|string
-	 */
-	public function getCaption()
+	public function getCaption(): string|Stringable|null
 	{
 		return $this->caption;
 	}
@@ -106,6 +78,7 @@ trait BaseControlTrait
 
 	/**
 	 * Returns form.
+	 * @return ($throw is true ? Form : ?Form)
 	 */
 	public function getForm(bool $throw = true): ?Form
 	{
@@ -118,15 +91,14 @@ trait BaseControlTrait
 	 */
 	public function loadHttpData(): void
 	{
-		$this->setValue($this->getHttpData(Form::DATA_TEXT));
+		$this->setValue($this->getHttpData(Form::DataText));
 	}
 
 
 	/**
 	 * Loads HTTP data.
-	 * @return mixed
 	 */
-	protected function getHttpData($type, string $htmlTail = null)
+	protected function getHttpData($type, ?string $htmlTail = null): mixed
 	{
 		return $this->getForm()->getHttpData($type, $this->getHtmlName() . $htmlTail);
 	}
@@ -137,11 +109,11 @@ trait BaseControlTrait
 	 */
 	public function getHtmlName(): string
 	{
-		return Nette\Forms\Helpers::generateHtmlName($this->lookupPath(Form::class));
+		return $this->control->name ?? Nette\Forms\Helpers::generateHtmlName($this->lookupPath(Form::class));
 	}
 
 
-	/********************* interface IControl ****************d*g**/
+	/********************* interface Control ****************d*g**/
 
 
 	/**
@@ -149,7 +121,7 @@ trait BaseControlTrait
 	 * @return static
 	 * @internal
 	 */
-	public function setValue($value)
+	public function setValue(mixed $value)
 	{
 		$this->value = $value;
 		return $this;
@@ -182,10 +154,11 @@ trait BaseControlTrait
 	 */
 	public function setDefaultValue($value)
 	{
-		$form = $this->getForm(false);
+		$form = $this->getForm(throw: false);
 		if ($this->isDisabled() || !$form || !$form->isAnchored() || !$form->isSubmitted()) {
 			$this->setValue($value);
 		}
+
 		return $this;
 	}
 
@@ -194,13 +167,15 @@ trait BaseControlTrait
 	 * Disables or enables control.
 	 * @return static
 	 */
-	public function setDisabled(/*bool*/ $value = true)
+	public function setDisabled(bool $state = true)
 	{
-		if ($this->disabled = (bool) $value) {
+		$this->disabled = $state;
+		if ($state) {
 			$this->setValue(null);
-		} elseif (($form = $this->getForm(false)) && $form->isAnchored() && $form->isSubmitted()) {
+		} elseif (($form = $this->getForm(throw: false)) && $form->isAnchored() && $form->isSubmitted()) {
 			$this->loadHttpData();
 		}
+
 		return $this;
 	}
 
@@ -216,11 +191,10 @@ trait BaseControlTrait
 
 	/**
 	 * Sets whether control value is excluded from $form->getValues() result.
-	 * @return static
 	 */
-	public function setOmitted(bool $value = true)
+	public function setOmitted(bool $state = true): static
 	{
-		$this->omitted = $value;
+		$this->omitted = $state;
 		return $this;
 	}
 
@@ -257,16 +231,15 @@ trait BaseControlTrait
 
 	/**
 	 * Generates label's HTML element.
-	 * @param  string|object  $caption
-	 * @return Html|string
+	 * @return Html|string|null
 	 */
-	public function getLabel($caption = null)
+	public function getLabel(string|Stringable|null $caption = null)
 	{
 		$label = clone $this->label;
 		$label->for = $this->getHtmlId();
-		$caption = $caption === null ? $this->caption : $caption;
+		$caption ??= $this->caption;
 		$translator = $this->getForm()->getTranslator();
-		$label->setText($translator ? $translator->translate($caption) : $caption);
+		$label->setText($translator && !$caption instanceof Nette\HtmlStringable ? $translator->translate($caption) : $caption);
 		return $label;
 	}
 
@@ -303,10 +276,8 @@ trait BaseControlTrait
 
 	/**
 	 * Changes control's HTML id.
-	 * @param  string|bool|null  $id
-	 * @return static
 	 */
-	public function setHtmlId($id)
+	public function setHtmlId(string|bool|null $id): static
 	{
 		$this->control->id = $id;
 		return $this;
@@ -315,9 +286,8 @@ trait BaseControlTrait
 
 	/**
 	 * Returns control's HTML id.
-	 * @return mixed
 	 */
-	public function getHtmlId()
+	public function getHtmlId(): string|bool|null
 	{
 		if (!isset($this->control->id)) {
 			$form = $this->getForm();
@@ -326,26 +296,35 @@ trait BaseControlTrait
 				: $form->getName() . '-';
 			$this->control->id = sprintf(self::$idMask, $prefix . $this->lookupPath());
 		}
+
 		return $this->control->id;
 	}
 
 
 	/**
 	 * Changes control's HTML attribute.
-	 * @return static
 	 */
-	public function setHtmlAttribute(string $name, $value = true)
+	public function setHtmlAttribute(string $name, mixed $value = true): static
 	{
 		$this->control->$name = $value;
+		if (
+			$name === 'name'
+			&& ($form = $this->getForm(false))
+			&& !$this->isDisabled()
+			&& $form->isAnchored()
+			&& $form->isSubmitted()
+		) {
+			$this->loadHttpData();
+		}
+
 		return $this;
 	}
 
 
 	/**
 	 * @deprecated  use setHtmlAttribute()
-	 * @return static
 	 */
-	public function setAttribute(string $name, $value = true)
+	public function setAttribute(string $name, mixed $value = true): static
 	{
 		return $this->setHtmlAttribute($name, $value);
 	}
@@ -356,9 +335,8 @@ trait BaseControlTrait
 
 	/**
 	 * Sets translate adapter.
-	 * @return static
 	 */
-	public function setTranslator(?Nette\Localization\ITranslator $translator)
+	public function setTranslator(?Nette\Localization\Translator $translator): static
 	{
 		$this->translator = $translator;
 		return $this;
@@ -368,29 +346,32 @@ trait BaseControlTrait
 	/**
 	 * Returns translate adapter.
 	 */
-	public function getTranslator(): ?Nette\Localization\ITranslator
+	public function getTranslator(): ?Nette\Localization\Translator
 	{
 		if ($this->translator === true) {
-			return $this->getForm(false) ? $this->getForm()->getTranslator() : null;
+			return $this->getForm(false)
+				? $this->getForm()->getTranslator()
+				: null;
 		}
+
 		return $this->translator;
 	}
 
 
 	/**
 	 * Returns translated string.
-	 * @return mixed
 	 */
-	public function translate($value, ...$parameters)
+	public function translate($value, ...$parameters): mixed
 	{
 		if ($translator = $this->getTranslator()) {
 			$tmp = is_array($value) ? [&$value] : [[&$value]];
 			foreach ($tmp[0] as &$v) {
-				if ($v != null && !$v instanceof Html) { // intentionally ==
+				if ($v != null && !$v instanceof Nette\HtmlStringable) { // intentionally ==
 					$v = $translator->translate($v, ...$parameters);
 				}
 			}
 		}
+
 		return $value;
 	}
 
@@ -400,12 +381,13 @@ trait BaseControlTrait
 
 	/**
 	 * Adds a validation rule.
-	 * @param  callable|string  $validator
-	 * @param  string|object  $errorMessage
 	 * @return static
 	 */
-	public function addRule($validator, $errorMessage = null, $arg = null)
-	{
+	public function addRule(
+		callable|string $validator,
+		string|Stringable|null $errorMessage = null,
+		mixed $arg = null,
+	) {
 		$this->rules->addRule($validator, $errorMessage, $arg);
 		return $this;
 	}
@@ -413,7 +395,6 @@ trait BaseControlTrait
 
 	/**
 	 * Adds a validation condition a returns new branch.
-	 * @return Rules      new branch
 	 */
 	public function addCondition($validator, $value = null): Rules
 	{
@@ -423,11 +404,20 @@ trait BaseControlTrait
 
 	/**
 	 * Adds a validation condition based on another control a returns new branch.
-	 * @return Rules      new branch
 	 */
-	public function addConditionOn(IControl $control, $validator, $value = null): Rules
+	public function addConditionOn(Control $control, $validator, $value = null): Rules
 	{
 		return $this->rules->addConditionOn($control, $validator, $value);
+	}
+
+
+	/**
+	 * Adds an input filter callback.
+	 */
+	public function addFilter(callable $filter): static
+	{
+		$this->getRules()->addFilter($filter);
+		return $this;
 	}
 
 
@@ -439,10 +429,8 @@ trait BaseControlTrait
 
 	/**
 	 * Makes control mandatory.
-	 * @param  bool|string|object  $value
-	 * @return static
 	 */
-	public function setRequired($value = true)
+	public function setRequired(string|Stringable|bool $value = true): static
 	{
 		$this->rules->setRequired($value);
 		return $this;
@@ -466,6 +454,7 @@ trait BaseControlTrait
 		if ($this->isDisabled()) {
 			return;
 		}
+
 		$this->cleanErrors();
 		$this->rules->validate();
 	}
@@ -473,9 +462,8 @@ trait BaseControlTrait
 
 	/**
 	 * Adds error message to the list.
-	 * @param  string|object  $message
 	 */
-	public function addError($message, bool $translate = true): void
+	public function addError(string|Stringable $message, bool $translate = true): void
 	{
 		$this->errors[] = $translate ? $this->translate($message) : $message;
 	}
@@ -511,41 +499,34 @@ trait BaseControlTrait
 	}
 
 
-	/**
-	 * Globally enables new required/optional behavior.
-	 * This method will be deprecated in next version.
-	 */
-	public static function enableAutoOptionalMode(): void
-	{
-		self::$autoOptional = true;
-	}
-
-
 	/********************* user data ****************d*g**/
 
 
 	/**
 	 * Sets user-specific option.
-	 * @return static
 	 */
-	public function setOption($key, $value)
+	public function setOption($key, mixed $value): static
 	{
 		if ($value === null) {
 			unset($this->options[$key]);
 		} else {
 			$this->options[$key] = $value;
 		}
+
 		return $this;
 	}
 
 
 	/**
 	 * Returns user-specific option.
-	 * @return mixed
 	 */
-	public function getOption($key, $default = null)
+	public function getOption($key): mixed
 	{
-		return $this->options[$key] ?? $default;
+		if (func_num_args() > 1) {
+			trigger_error(__METHOD__ . '() parameter $default is deprecated, use operator ??', E_USER_DEPRECATED);
+			$default = func_get_arg(1);
+		}
+		return $this->options[$key] ?? $default ?? null;
 	}
 
 
@@ -568,17 +549,20 @@ trait BaseControlTrait
 			if (isset(self::$extMethods[$name][$class])) {
 				return (self::$extMethods[$name][$class])($this, ...$args);
 			}
+
 			$class = get_parent_class($class);
 		} while ($class);
+
 		return parent::__call($name, $args);
 	}
 
 
 	public static function extensionMethod(string $name, /*callable*/ $callback): void
 	{
-		if (strpos($name, '::') !== false) { // back compatibility
+		if (str_contains($name, '::')) { // back compatibility
 			[, $name] = explode('::', $name);
 		}
+
 		self::$extMethods[$name][static::class] = $callback;
 	}
 }

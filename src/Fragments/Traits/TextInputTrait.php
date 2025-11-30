@@ -15,14 +15,12 @@ namespace Nextras\FormComponents\Fragments\Traits;
 
 use Nette;
 use Nette\Forms\Form;
+use Stringable;
 
 
 trait TextInputTrait
 {
-	/**
-	 * @param  string|object  $label
-	 */
-	public function __construct($label = null, int $maxLength = null)
+	public function __construct(string|Stringable|null $label = null, ?int $maxLength = null)
 	{
 		parent::__construct($label);
 		$this->control->maxlength = $maxLength;
@@ -30,20 +28,16 @@ trait TextInputTrait
 	}
 
 
-	/**
-	 * Loads HTTP data.
-	 */
 	public function loadHttpData(): void
 	{
-		$this->setValue($this->getHttpData(Form::DATA_LINE));
+		$this->setValue($this->getHttpData(Form::DataLine));
 	}
 
 
 	/**
 	 * Changes control's type attribute.
-	 * @return static
 	 */
-	public function setHtmlType(string $type)
+	public function setHtmlType(string $type): static
 	{
 		$this->control->type = $type;
 		return $this;
@@ -52,17 +46,13 @@ trait TextInputTrait
 
 	/**
 	 * @deprecated  use setHtmlType()
-	 * @return static
 	 */
-	public function setType(string $type)
+	public function setType(string $type): static
 	{
 		return $this->setHtmlType($type);
 	}
 
 
-	/**
-	 * Generates control's HTML element.
-	 */
 	public function getControl(): Nette\Utils\Html
 	{
 		return parent::getControl()->addAttributes([
@@ -72,35 +62,48 @@ trait TextInputTrait
 	}
 
 
-	/**
-	 * @return static
-	 */
-	public function addRule($validator, $errorMessage = null, $arg = null)
-	{
-		if ($this->control->type === null && in_array($validator, [Form::EMAIL, Form::URL, Form::INTEGER], true)) {
-			static $types = [Form::EMAIL => 'email', Form::URL => 'url', Form::INTEGER => 'number'];
+	/** @return static */
+	public function addRule(
+		callable|string $validator,
+		string|Stringable|null $errorMessage = null,
+		mixed $arg = null,
+	) {
+		foreach ($this->getRules() as $rule) {
+			if (!$rule->canExport() && !$rule->branch) {
+				return parent::addRule($validator, $errorMessage, $arg);
+			}
+		}
+
+		if ($this->control->type === null && in_array($validator, [Form::Email, Form::URL, Form::Integer], true)) {
+			$types = [Form::Email => 'email', Form::URL => 'url', Form::Integer => 'number'];
 			$this->control->type = $types[$validator];
 
 		} elseif (
-			in_array($validator, [Form::MIN, Form::MAX, Form::RANGE], true)
+			in_array($validator, [Form::Min, Form::Max, Form::Range], true)
 			&& in_array($this->control->type, ['number', 'range', 'datetime-local', 'datetime', 'date', 'month', 'week', 'time'], true)
 		) {
-			if ($validator === Form::MIN) {
+			if ($validator === Form::Min) {
 				$range = [$arg, null];
-			} elseif ($validator === Form::MAX) {
+			} elseif ($validator === Form::Max) {
 				$range = [null, $arg];
 			} else {
 				$range = $arg;
 			}
+
 			if (isset($range[0]) && is_scalar($range[0])) {
-				$this->control->min = isset($this->control->min) ? max($this->control->min, $range[0]) : $range[0];
+				$this->control->min = isset($this->control->min)
+					? max($this->control->min, $range[0])
+					: $range[0];
 			}
+
 			if (isset($range[1]) && is_scalar($range[1])) {
-				$this->control->max = isset($this->control->max) ? min($this->control->max, $range[1]) : $range[1];
+				$this->control->max = isset($this->control->max)
+					? min($this->control->max, $range[1])
+					: $range[1];
 			}
 
 		} elseif (
-			$validator === Form::PATTERN
+			$validator === Form::Pattern
 			&& is_scalar($arg)
 			&& in_array($this->control->type, [null, 'text', 'search', 'tel', 'url', 'email', 'password'], true)
 		) {
